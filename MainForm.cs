@@ -333,8 +333,8 @@ public class MainForm : Form
         btnCrearSede.Click += (_, _) => RegistrarSede();
         panelCrearSede.Controls.Add(btnCrearSede);
 
-        tab.Controls.Add(panelCrearSede);
         tab.Controls.Add(panelCrearSala);
+        tab.Controls.Add(panelCrearSede);
         tab.Controls.Add(panelCrear);
         return tab;
     }
@@ -820,6 +820,8 @@ public class MainForm : Form
         Intentar(() =>
         {
             string respuesta = ProcedimientosBD.VenderAbono(idAsistente, idTipoAbono, pagoExitoso);
+            if (!pagoExitoso)
+                respuesta = "ROLLBACK ejecutado correctamente.\nLa venta del abono fue cancelada debido a un error en el proceso de pago";
             Exito(respuesta);
             CargarAbonosGrilla();
         });
@@ -1092,11 +1094,11 @@ public class MainForm : Form
             MessageBox.Show(this, ex.Message, "FestCine — Operación rechazada",
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
-        catch (SqlException ex)
+        catch (SqlException)
         {
             // Error técnico de la BD (integridad, conexión, etc.)
             MessageBox.Show(this,
-                "No fue posible completar la operación.\n\nDetalle: " + ex.Message,
+                "No fue posible completar la operación.",
                 "FestCine — Error de base de datos",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }

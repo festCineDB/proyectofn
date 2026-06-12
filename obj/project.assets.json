@@ -1687,23 +1687,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Usuario\\.nuget\\packages\\": {},
+    "C:\\Users\\Hp\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Usuario\\Desktop\\Festcine\\ClienteEscritorio\\FestCineCliente.csproj",
+      "projectUniqueName": "C:\\Users\\Hp\\Desktop\\proyectofn-1\\FestCineCliente.csproj",
       "projectName": "FestCineCliente",
-      "projectPath": "C:\\Users\\Usuario\\Desktop\\Festcine\\ClienteEscritorio\\FestCineCliente.csproj",
-      "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Usuario\\Desktop\\Festcine\\ClienteEscritorio\\obj\\",
+      "projectPath": "C:\\Users\\Hp\\Desktop\\proyectofn-1\\FestCineCliente.csproj",
+      "packagesPath": "C:\\Users\\Hp\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Hp\\Desktop\\proyectofn-1\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Hp\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -1778,7 +1778,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

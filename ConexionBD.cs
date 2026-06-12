@@ -11,5 +11,5 @@ public static class ConexionBD
     // o con usuario y contraseña:
     //   "Data Source=MI-PC;Initial Catalog=FestCine;User ID=usuario;Password=clave;TrustServerCertificate=True"
     public const string CadenaConexion =
-        "Server=DESKTOP-0QFLSO6\\SQLEXPRESS;Database=FestCine;Integrated Security=True;TrustServerCertificate=True";
+        "Server=HpVictusRyzen\\SQLEXPRESS;Database=FestCine;Integrated Security=True;TrustServerCertificate=True";
 }
