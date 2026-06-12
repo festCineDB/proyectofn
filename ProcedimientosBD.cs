@@ -130,4 +130,232 @@ public static class ProcedimientosBD
     public static (DataTable Datos, string Respuesta) ReporteRanking()    => EjecutarReporte("sp_ReporteRanking");
     public static (DataTable Datos, string Respuesta) ReportePremiacion() => EjecutarReporte("sp_ReportePremiacion");
     public static (DataTable Datos, string Respuesta) ReporteFinanciero() => EjecutarReporte("sp_ReporteFinanciero");
+
+    /* ── Eventos Paralelos ──────────────────────────────────── */
+
+    public static DataTable ListarEventosParalelos() => EjecutarSpTabla("sp_ListarEventosParalelos");
+    public static DataTable ListarPersonal()         => EjecutarSpTabla("sp_ListarPersonal");
+
+    public static DataTable ListarExpositoresPorEvento(int idEvento) =>
+        EjecutarSpTabla("sp_ListarExpositoresPorEvento",
+            new SqlParameter("@IdEvento", idEvento));
+
+    public static DataTable ListarAsistentesPorEvento(int idEvento) =>
+        EjecutarSpTabla("sp_ListarAsistentesPorEvento",
+            new SqlParameter("@IdEvento", idEvento));
+
+    public static string AgregarExpositorEvento(int idEvento, int idPersonal)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("AgregarExpositorEvento", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@IdEvento", idEvento);
+        comando.Parameters.AddWithValue("@IdPersonal", idPersonal);
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
+
+    public static string EliminarExpositorEvento(int idEvento, int idPersonal)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("EliminarExpositorEvento", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@IdEvento", idEvento);
+        comando.Parameters.AddWithValue("@IdPersonal", idPersonal);
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
+
+    /* ── Competencia y Jurados ─────────────────────────────── */
+
+    public static DataTable ListarCategorias()          => EjecutarSpTabla("sp_ListarCategorias");
+    public static DataTable ListarMiembrosJurado()       => EjecutarSpTabla("sp_ListarMiembrosJurado");
+    public static DataTable ListarPeliculasCompetencia() => EjecutarSpTabla("sp_ListarPeliculas");
+
+    public static DataTable ListarPeliculasEnCompetencia(int idCategoria) =>
+        EjecutarSpTabla("sp_ListarPeliculasEnCompetencia",
+            new SqlParameter("@IdCategoria", idCategoria));
+
+    public static DataTable ListarMiembrosPorCategoria(int idCategoria) =>
+        EjecutarSpTabla("sp_ListarMiembrosPorCategoria",
+            new SqlParameter("@IdCategoria", idCategoria));
+
+    public static DataTable ListarEvaluacionesPorCategoria(int idCategoria) =>
+        EjecutarSpTabla("sp_ListarEvaluacionesPorCategoria",
+            new SqlParameter("@IdCategoria", idCategoria));
+
+    public static DataTable ListarPremios() => EjecutarSpTabla("sp_ListarPremios");
+
+    public static string RegistrarEvaluacion(int idMiembro, int idPelicula, int idCategoria, int puntuacion, string comentario)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("RegistrarEvaluacion", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@IdMiembro", idMiembro);
+        comando.Parameters.AddWithValue("@IdPelicula", idPelicula);
+        comando.Parameters.AddWithValue("@IdCategoria", idCategoria);
+        comando.Parameters.AddWithValue("@Puntuacion", puntuacion);
+        comando.Parameters.AddWithValue("@Comentario", comentario);
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
+
+    public static string RegistrarPremio(int idCategoria, int idPelicula, int anioEdicion)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("RegistrarPremio", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@IdCategoria", idCategoria);
+        comando.Parameters.AddWithValue("@IdPelicula", idPelicula);
+        comando.Parameters.AddWithValue("@AnioEdicion", anioEdicion);
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
+
+    /* ── Logística y Patrocinios ───────────────────────────── */
+
+    public static DataTable ListarHoteles()        => EjecutarSpTabla("sp_ListarHoteles");
+    public static DataTable ListarEdiciones()      => EjecutarSpTabla("sp_ListarEdiciones");
+    public static DataTable ListarPatrocinadores()  => EjecutarSpTabla("sp_ListarPatrocinadores");
+    public static DataTable ListarAlojamientos()    => EjecutarSpTabla("sp_ListarAlojamientos");
+    public static DataTable ListarTraslados()       => EjecutarSpTabla("sp_ListarTraslados");
+    public static DataTable ListarPatrocinioEdicion() => EjecutarSpTabla("sp_ListarPatrocinioEdicion");
+
+    public static string RegistrarAlojamiento(int idPersonal, int idHotel, string nroHabitacion, DateTime checkIn, DateTime checkOut)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("RegistrarAlojamiento", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@IdPersonal", idPersonal);
+        comando.Parameters.AddWithValue("@IdHotel", idHotel);
+        comando.Parameters.AddWithValue("@NroHabitacion", nroHabitacion);
+        comando.Parameters.AddWithValue("@CheckIn", checkIn);
+        comando.Parameters.AddWithValue("@CheckOut", checkOut);
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
+
+    public static string RegistrarTraslado(int idPersonal, string tipo, string origen, string destino, DateTime fechaHora, string nroVuelo)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("RegistrarTraslado", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@IdPersonal", idPersonal);
+        comando.Parameters.AddWithValue("@TipoTraslado", tipo);
+        comando.Parameters.AddWithValue("@Origen", origen);
+        comando.Parameters.AddWithValue("@Destino", destino);
+        comando.Parameters.AddWithValue("@FechaHora", fechaHora);
+        comando.Parameters.AddWithValue("@NroVuelo", nroVuelo ?? "");
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
+
+    public static string RegistrarPatrocinio(int idPatrocinador, int idEdicion, string tipoAporte, decimal? monto, string descripcion)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("RegistrarPatrocinio", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@IdPatrocinador", idPatrocinador);
+        comando.Parameters.AddWithValue("@IdEdicion", idEdicion);
+        comando.Parameters.AddWithValue("@TipoAporte", tipoAporte);
+        comando.Parameters.AddWithValue("@Monto", (object?)monto ?? DBNull.Value);
+        comando.Parameters.AddWithValue("@Descripcion", descripcion);
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
+
+    public static DataTable ListarSedes() => EjecutarSpTabla("sp_ListarSedes");
+
+    public static (string Respuesta, int IdPelicula) CrearPelicula(string titulo, int anioProd, int duracion,
+        string paisOrigen, string sinopsis, string clasificacion, string formato, string estado)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("CrearPelicula", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@Titulo", titulo);
+        comando.Parameters.AddWithValue("@AnioProd", anioProd);
+        comando.Parameters.AddWithValue("@Duracion", duracion);
+        comando.Parameters.AddWithValue("@PaisOrigen", paisOrigen);
+        comando.Parameters.AddWithValue("@Sinopsis", sinopsis ?? "");
+        comando.Parameters.AddWithValue("@Clasificacion", clasificacion);
+        comando.Parameters.AddWithValue("@Formato", formato);
+        comando.Parameters.AddWithValue("@Estado", estado);
+        var idPelicula = new SqlParameter("@IdPelicula", SqlDbType.Int)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(idPelicula);
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return (respuesta.Value?.ToString() ?? "Operacion completada.",
+                Convert.ToInt32(idPelicula.Value));
+    }
+
+    public static DataTable ListarGeneros() => EjecutarSpTabla("sp_ListarGeneros");
+
+    public static string AgregarGeneroPelicula(int idPelicula, int idGenero)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("AgregarGeneroPelicula", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@IdPelicula", idPelicula);
+        comando.Parameters.AddWithValue("@IdGenero", idGenero);
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
+
+    public static string CrearSala(string nombreSala, int capacidad, int idSede)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("CrearSala", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@NombreSala", nombreSala);
+        comando.Parameters.AddWithValue("@Capacidad", capacidad);
+        comando.Parameters.AddWithValue("@IdSede", idSede);
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
+
+    public static string CrearAsistente(string nombre, string email, string telefono, string tipoAsistente)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("CrearAsistente", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@Nombre", nombre);
+        comando.Parameters.AddWithValue("@Email", email);
+        comando.Parameters.AddWithValue("@Telefono", telefono);
+        comando.Parameters.AddWithValue("@TipoAsistente", tipoAsistente);
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
 }
