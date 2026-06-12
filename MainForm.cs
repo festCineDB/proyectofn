@@ -48,10 +48,20 @@ public class MainForm : Form
     private readonly NumericUpDown nudCapacidadSala = new() { Width = 80, Maximum = 9999, Minimum = 1 };
     private readonly ComboBox cboSedeSala = NuevoCombo();
 
+    private readonly TextBox txtNombreSede = new() { Width = 140 };
+    private readonly TextBox txtDirSede = new() { Width = 180 };
+    private readonly TextBox txtCiudadSede = new() { Width = 120 };
+    private readonly TextBox txtWebSede = new() { Width = 140 };
+
     private readonly TextBox txtNombreAsist = new() { Width = 160 };
     private readonly TextBox txtEmailAsist = new() { Width = 160 };
     private readonly TextBox txtTelAsist = new() { Width = 110 };
+    private readonly ComboBox cboProfesionAsist = new() { Width = 140, DropDownStyle = ComboBoxStyle.DropDownList };
+    private readonly TextBox txtProfesionOtros = new() { Width = 130, PlaceholderText = "especifique..." };
+    private readonly Panel panelProfesion = new() { Width = 280, Height = 28 };
     private readonly ComboBox cboTipoAsist = NuevoCombo();
+    private readonly Label lblCategorias = CrearLabel("Categorías:", 0, 6);
+    private readonly CheckedListBox clbCategorias = new() { Width = 230, Height = 90, CheckOnClick = true };
     private readonly DataGridView gridAsistentes = NuevaGrilla();
 
     /* ── Abonos (T1) ── */
@@ -106,6 +116,9 @@ public class MainForm : Form
     private readonly Label lblRanking    = NuevaEtiquetaEstado();
     private readonly Label lblPremiacion = NuevaEtiquetaEstado();
     private readonly Label lblFinanciero = NuevaEtiquetaEstado();
+    private readonly ComboBox cboAnioRanking    = NuevoCombo();
+    private readonly ComboBox cboAnioPremiacion = NuevoCombo();
+    private readonly ComboBox cboAnioFinanciero = NuevoCombo();
 
     public MainForm()
     {
@@ -124,9 +137,9 @@ public class MainForm : Form
         tabs.TabPages.Add(CrearTabEventos());
         tabs.TabPages.Add(CrearTabLogistica());
         tabs.TabPages.Add(CrearTabCompetencia());
-        tabs.TabPages.Add(CrearTabReporte("🏆 Ranking", gridRanking, lblRanking, CargarRanking));
-        tabs.TabPages.Add(CrearTabReporte("🎖 Premiación", gridPremiacion, lblPremiacion, CargarPremiacion));
-        tabs.TabPages.Add(CrearTabReporte("💰 Financiero", gridFinanciero, lblFinanciero, CargarFinanciero));
+        tabs.TabPages.Add(CrearTabReporte("🏆 Ranking", gridRanking, lblRanking, cboAnioRanking, CargarRanking));
+        tabs.TabPages.Add(CrearTabReporte("🎖 Premiación", gridPremiacion, lblPremiacion, cboAnioPremiacion, CargarPremiacion));
+        tabs.TabPages.Add(CrearTabReporte("💰 Financiero", gridFinanciero, lblFinanciero, cboAnioFinanciero, CargarFinanciero));
         Controls.Add(tabs);
 
         Load += (_, _) => CargarDatosIniciales();
@@ -192,6 +205,33 @@ public class MainForm : Form
         cboTipoAsist.Width = 100;
         cboTipoAsist.SelectedIndex = 0;
         panelAsist.Controls.Add(Etiquetado("Tipo:", cboTipoAsist));
+        cboProfesionAsist.Items.AddRange(new[] { "Actor", "Crítico", "Director", "Otros" });
+        cboProfesionAsist.SelectedIndex = -1;
+        cboProfesionAsist.Location = new Point(0, 0);
+        txtProfesionOtros.Location = new Point(145, 0);
+        txtProfesionOtros.Visible = false;
+        panelProfesion.Controls.Add(cboProfesionAsist);
+        panelProfesion.Controls.Add(txtProfesionOtros);
+        panelProfesion.Visible = false;
+        cboProfesionAsist.SelectedIndexChanged += (_, _) =>
+        {
+            txtProfesionOtros.Visible = cboProfesionAsist.Text == "Otros";
+            if (cboProfesionAsist.Text == "Otros") txtProfesionOtros.Focus();
+        };
+        panelAsist.Controls.Add(Etiquetado("Profesión:", panelProfesion));
+        lblCategorias.Visible = false;
+        panelAsist.Controls.Add(lblCategorias);
+        clbCategorias.Visible = false;
+        panelAsist.Controls.Add(clbCategorias);
+        cboTipoAsist.SelectedIndexChanged += (_, _) =>
+        {
+            bool esJurado = cboTipoAsist.Text == "Jurado";
+            panelProfesion.Visible = esJurado;
+            lblCategorias.Visible = esJurado;
+            clbCategorias.Visible = esJurado;
+            if (esJurado)
+                Intentar(() => EnlazarCheckedListBox(clbCategorias, ProcedimientosBD.ListarCategorias(), "NombreCategoria", "IdCategoria"));
+        };
         var btnAsist = NuevoBoton("➕ Asistente");
         btnAsist.Click += (_, _) => RegistrarAsistente();
         panelAsist.Controls.Add(btnAsist);
@@ -276,6 +316,24 @@ public class MainForm : Form
         btnCrearSala.Click += (_, _) => CrearSala();
         panelCrearSala.Controls.Add(btnCrearSala);
 
+        var panelCrearSede = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            Padding = new Padding(10),
+            WrapContents = true,
+            FlowDirection = FlowDirection.LeftToRight
+        };
+        panelCrearSede.Controls.Add(CrearLabel("╶  CREAR SEDE  ╴", 0, 6));
+        panelCrearSede.Controls.Add(Etiquetado("Nombre:", txtNombreSede));
+        panelCrearSede.Controls.Add(Etiquetado("Dirección:", txtDirSede));
+        panelCrearSede.Controls.Add(Etiquetado("Ciudad:", txtCiudadSede));
+        panelCrearSede.Controls.Add(Etiquetado("Sitio web:", txtWebSede));
+        var btnCrearSede = NuevoBoton("➕ Sede");
+        btnCrearSede.Click += (_, _) => RegistrarSede();
+        panelCrearSede.Controls.Add(btnCrearSede);
+
+        tab.Controls.Add(panelCrearSede);
         tab.Controls.Add(panelCrearSala);
         tab.Controls.Add(panelCrear);
         return tab;
@@ -500,11 +558,16 @@ public class MainForm : Form
         return tab;
     }
 
-    private static TabPage CrearTabReporte(string titulo, DataGridView grid, Label lblEstado, Action cargar)
+    private static TabPage CrearTabReporte(string titulo, DataGridView grid, Label lblEstado,
+        ComboBox cboAnio, Action cargar)
     {
         var tab = new TabPage(titulo);
 
         var panel = NuevoPanelSuperior(70);
+        cboAnio.Width = 100;
+        cboAnio.Items.Insert(0, "Todos");
+        cboAnio.SelectedIndex = 0;
+        panel.Controls.Add(Etiquetado("Año Edición:", cboAnio));
         var btn = NuevoBoton("↺ Actualizar reporte");
         btn.Click += (_, _) => cargar();
         panel.Controls.Add(btn);
@@ -559,6 +622,9 @@ public class MainForm : Form
             CargarEventosIniciales();
             CargarLogisticaInicial();
             CargarCompetenciaInicial();
+            CargarEdicionesCombo(cboAnioRanking);
+            CargarEdicionesCombo(cboAnioPremiacion);
+            CargarEdicionesCombo(cboAnioFinanciero);
         });
     }
 
@@ -656,10 +722,27 @@ public class MainForm : Form
         });
     }
 
+    private void CargarEdicionesCombo(ComboBox cbo)
+    {
+        DataTable ediciones = ProcedimientosBD.ListarEdiciones();
+        cbo.Items.Clear();
+        cbo.Items.Add("Todos");
+        foreach (DataRow r in ediciones.Rows)
+            cbo.Items.Add(r["Anio"]?.ToString() ?? "");
+        cbo.SelectedIndex = 0;
+    }
+
+    private int? ObtenerAnioSeleccionado(ComboBox cbo)
+    {
+        if (cbo.SelectedIndex <= 0) return null;
+        if (int.TryParse(cbo.Text, out int anio)) return anio;
+        return null;
+    }
+
     private void CargarRanking() =>
         Intentar(() =>
         {
-            (DataTable datos, string respuesta) = ProcedimientosBD.ReporteRanking();
+            (DataTable datos, string respuesta) = ProcedimientosBD.ReporteRanking(ObtenerAnioSeleccionado(cboAnioRanking));
             gridRanking.DataSource = datos;
             lblRanking.Text = respuesta;
         });
@@ -667,17 +750,18 @@ public class MainForm : Form
     private void CargarPremiacion() =>
         Intentar(() =>
         {
-            (DataTable datos, string respuesta) = ProcedimientosBD.ReportePremiacion();
+            (DataTable datos, string respuesta) = ProcedimientosBD.ReportePremiacion(ObtenerAnioSeleccionado(cboAnioPremiacion));
             gridPremiacion.DataSource = datos;
-            if (gridPremiacion.Columns["PromedioJurado"] != null)
-                gridPremiacion.Columns["PromedioJurado"].DefaultCellStyle.Format = "N2";
+            var colProm = gridPremiacion.Columns["PromedioJurado"];
+            if (colProm != null)
+                colProm.DefaultCellStyle.Format = "N2";
             lblPremiacion.Text = respuesta;
         });
 
     private void CargarFinanciero() =>
         Intentar(() =>
         {
-            (DataTable datos, string respuesta) = ProcedimientosBD.ReporteFinanciero();
+            (DataTable datos, string respuesta) = ProcedimientosBD.ReporteFinanciero(ObtenerAnioSeleccionado(cboAnioFinanciero));
             gridFinanciero.DataSource = datos;
             lblFinanciero.Text = respuesta;
         });
@@ -798,22 +882,59 @@ public class MainForm : Form
         });
     }
 
+    private void RegistrarSede()
+    {
+        if (string.IsNullOrWhiteSpace(txtNombreSede.Text)) { Aviso("Ingrese el nombre de la sede."); return; }
+        Intentar(() =>
+        {
+            string respuesta = ProcedimientosBD.CrearSede(
+                txtNombreSede.Text.Trim(), txtDirSede.Text.Trim(),
+                txtCiudadSede.Text.Trim(), txtWebSede.Text.Trim());
+            Exito(respuesta);
+            DataTable sedes = ProcedimientosBD.ListarSedes();
+            EnlazarCombo(cboSedeSala, sedes, "NombreSede", "IdSede");
+            txtNombreSede.Clear(); txtDirSede.Clear(); txtCiudadSede.Clear(); txtWebSede.Clear();
+        });
+    }
+
     private void RegistrarAsistente()
     {
         if (string.IsNullOrWhiteSpace(txtNombreAsist.Text)) { Aviso("Ingrese el nombre del asistente."); return; }
         if (string.IsNullOrWhiteSpace(txtEmailAsist.Text)) { Aviso("Ingrese el email del asistente."); return; }
         if (cboTipoAsist.SelectedItem == null) { Aviso("Seleccione el tipo de asistente."); return; }
+        if (cboTipoAsist.Text == "Jurado")
+        {
+            string prof = cboProfesionAsist.Text == "Otros" ? txtProfesionOtros.Text.Trim() : cboProfesionAsist.Text.Trim();
+            if (string.IsNullOrWhiteSpace(prof)) { Aviso("Ingrese la profesión del jurado."); return; }
+        }
+        if (cboTipoAsist.Text == "Jurado" && clbCategorias.CheckedItems.Count == 0)
+        { Aviso("Seleccione al menos una categoría para el jurado."); return; }
         Intentar(() =>
         {
+            string profesion = cboProfesionAsist.Text == "Otros" ? txtProfesionOtros.Text.Trim() : cboProfesionAsist.Text.Trim();
             string respuesta = ProcedimientosBD.CrearAsistente(
                 txtNombreAsist.Text.Trim(), txtEmailAsist.Text.Trim(),
-                txtTelAsist.Text.Trim(), cboTipoAsist.Text);
+                txtTelAsist.Text.Trim(), cboTipoAsist.Text,
+                profesion);
             Exito(respuesta);
+            if (cboTipoAsist.Text == "Jurado")
+            {
+                DataTable cats = ProcedimientosBD.ListarCategorias();
+                string email = txtEmailAsist.Text.Trim();
+                foreach (var item in clbCategorias.CheckedItems)
+                {
+                    var fila = cats.AsEnumerable().FirstOrDefault(r => r["NombreCategoria"]?.ToString() == item?.ToString());
+                    if (fila != null)
+                        ProcedimientosBD.AsignarCategoriaJurado(email, Convert.ToInt32(fila["IdCategoria"]));
+                }
+            }
             DataTable asistentes = ProcedimientosBD.ListarAsistentes();
             EnlazarCombo(cboAsistente, asistentes.Copy(), "Nombre", "IdAsistente");
             EnlazarCombo(cboAsistenteAb, asistentes.Copy(), "Nombre", "IdAsistente");
-            txtNombreAsist.Clear(); txtEmailAsist.Clear(); txtTelAsist.Clear();
+            txtNombreAsist.Clear(); txtEmailAsist.Clear(); txtTelAsist.Clear(); txtProfesionOtros.Clear();
+            cboProfesionAsist.SelectedIndex = -1; txtProfesionOtros.Visible = false;
             cboTipoAsist.SelectedIndex = 0;
+            clbCategorias.Items.Clear();
             gridAsistentes.DataSource = ProcedimientosBD.ListarAsistentes();
         });
     }
@@ -1121,6 +1242,19 @@ public class MainForm : Form
         combo.DisplayMember = display;
         combo.ValueMember = valor;
         combo.DataSource = datos;
+    }
+
+    private static void EnlazarCheckedListBox(CheckedListBox clb, DataTable datos, string display, string valor)
+    {
+        clb.Items.Clear();
+        foreach (DataRow r in datos.Rows)
+        {
+            string texto = r[display]?.ToString() ?? "";
+            int id = Convert.ToInt32(r[valor]);
+            clb.Items.Add(texto, false);
+            // store IdCategoria in Tag for retrieval
+            clb.Items[clb.Items.Count - 1] = new KeyValuePair<int, string>(id, texto);
+        }
     }
 
     /// <summary>Agrega a la tabla una columna de texto descriptivo para mostrar en combos.</summary>

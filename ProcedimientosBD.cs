@@ -111,11 +111,14 @@ public static class ProcedimientosBD
 
     /* ── Reportes (filas + parámetro OUTPUT con el resultado) ── */
 
-    private static (DataTable Datos, string Respuesta) EjecutarReporte(string nombreSp)
+    private static (DataTable Datos, string Respuesta) EjecutarReporte(string nombreSp, int? anioEdicion = null)
     {
         using SqlConnection conn = AbrirConexion();
         using var comando = new SqlCommand(nombreSp, conn);
         comando.CommandType = CommandType.StoredProcedure;
+
+        if (anioEdicion.HasValue)
+            comando.Parameters.AddWithValue("@AnioEdicion", anioEdicion.Value);
 
         var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 200)
         { Direction = ParameterDirection.Output };
@@ -127,9 +130,9 @@ public static class ProcedimientosBD
         return (dt, respuesta.Value?.ToString() ?? "Reporte generado.");
     }
 
-    public static (DataTable Datos, string Respuesta) ReporteRanking()    => EjecutarReporte("sp_ReporteRanking");
-    public static (DataTable Datos, string Respuesta) ReportePremiacion() => EjecutarReporte("sp_ReportePremiacion");
-    public static (DataTable Datos, string Respuesta) ReporteFinanciero() => EjecutarReporte("sp_ReporteFinanciero");
+    public static (DataTable Datos, string Respuesta) ReporteRanking(int? anioEdicion = null)    => EjecutarReporte("sp_ReporteRanking", anioEdicion);
+    public static (DataTable Datos, string Respuesta) ReportePremiacion(int? anioEdicion = null) => EjecutarReporte("sp_ReportePremiacion", anioEdicion);
+    public static (DataTable Datos, string Respuesta) ReporteFinanciero(int? anioEdicion = null) => EjecutarReporte("sp_ReporteFinanciero", anioEdicion);
 
     /* ── Eventos Paralelos ──────────────────────────────────── */
 
@@ -343,7 +346,23 @@ public static class ProcedimientosBD
         return respuesta.Value?.ToString() ?? "Operacion completada.";
     }
 
-    public static string CrearAsistente(string nombre, string email, string telefono, string tipoAsistente)
+    public static string CrearSede(string nombreSede, string direccion, string ciudad, string sitioWeb)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("CrearSede", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@NombreSede", nombreSede);
+        comando.Parameters.AddWithValue("@Direccion", direccion ?? "");
+        comando.Parameters.AddWithValue("@Ciudad", ciudad ?? "");
+        comando.Parameters.AddWithValue("@SitioWeb", sitioWeb ?? "");
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
+
+    public static string CrearAsistente(string nombre, string email, string telefono, string tipoAsistente, string profesion = "")
     {
         using SqlConnection conn = AbrirConexion();
         using var comando = new SqlCommand("CrearAsistente", conn);
@@ -352,10 +371,28 @@ public static class ProcedimientosBD
         comando.Parameters.AddWithValue("@Email", email);
         comando.Parameters.AddWithValue("@Telefono", telefono);
         comando.Parameters.AddWithValue("@TipoAsistente", tipoAsistente);
+        comando.Parameters.AddWithValue("@Profesion", profesion ?? "");
+        var idAsistente = new SqlParameter("@IdAsistente", SqlDbType.Int)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(idAsistente);
         var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
         { Direction = ParameterDirection.Output };
         comando.Parameters.Add(respuesta);
         comando.ExecuteNonQuery();
         return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
+
+    public static string AsignarCategoriaJurado(string emailJurado, int idCategoria)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("AsignarCategoriaJurado", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@EmailJurado", emailJurado);
+        comando.Parameters.AddWithValue("@IdCategoria", idCategoria);
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Categoria asignada.";
     }
 }
