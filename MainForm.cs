@@ -71,10 +71,19 @@ public class MainForm : Form
 
     /* ── Eventos Paralelos ── */
     private readonly ComboBox cboEvento       = NuevoCombo();
+    private readonly ComboBox cboAsistenteEvento = NuevoCombo();
     private readonly DataGridView gridEventos = NuevaGrilla();
     private readonly DataGridView gridExpositores = NuevaGrilla();
     private readonly DataGridView gridAsistentesEv = NuevaGrilla();
     private readonly ComboBox cboNuevoExpositor = NuevoCombo();
+    private readonly TextBox txtNombreEvento = new() { Width = 160 };
+    private readonly ComboBox cboTipoEvento = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 100 };
+    private readonly DateTimePicker dtpFechaEvento = new() { Format = DateTimePickerFormat.Custom, CustomFormat = "dd/MM/yyyy HH:mm", ShowUpDown = true, Width = 150 };
+    private readonly NumericUpDown nudAforoEvento = new() { Width = 80, Maximum = 99999, Minimum = 1 };
+    private readonly NumericUpDown nudCostoEvento = new() { Width = 100, DecimalPlaces = 2, Maximum = 999999, Minimum = 0 };
+    private readonly DataGridView gridPeliculas = NuevaGrilla();
+    private readonly DataGridView gridSedes = NuevaGrilla();
+    private readonly DataGridView gridSalasList = NuevaGrilla();
 
     /* ── Logística y Patrocinios ── */
     private readonly ComboBox cboInvitadoAloj   = NuevoCombo();
@@ -265,77 +274,80 @@ public class MainForm : Form
     {
         var tab = new TabPage("🎬 Admin Películas / Salas");
 
-        var panelCrear = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Top,
-            AutoSize = true,
-            Padding = new Padding(10),
-            WrapContents = true,
-            FlowDirection = FlowDirection.LeftToRight
-        };
-        panelCrear.Controls.Add(CrearLabel("╶  CREAR PELÍCULA  ╴", 0, 6));
-        panelCrear.Controls.Add(Etiquetado("Título:", txtTituloPeli));
-        panelCrear.Controls.Add(Etiquetado("Año:", nudAnioPeli));
-        panelCrear.Controls.Add(Etiquetado("Dur.(min):", nudDuracionPeli));
-        panelCrear.Controls.Add(Etiquetado("País:", txtPaisPeli));
-        panelCrear.Controls.Add(Etiquetado("Sinopsis:", txtSinopsisPeli));
         cboClasifPeli.Items.AddRange(new[] { "G", "PG", "PG-13", "R", "NC-17" });
-        cboClasifPeli.Width = 80;
-        panelCrear.Controls.Add(Etiquetado("Clasif:", cboClasifPeli));
-        cboFormatoPeli.Items.AddRange(new[] { "2D", "3D", "IMAX", "4DX" });
-        cboFormatoPeli.Width = 80;
-        panelCrear.Controls.Add(Etiquetado("Formato:", cboFormatoPeli));
-        cboEstadoPeli.Items.AddRange(new[] { "Postulada", "Seleccionada", "Rechazada", "Premiada" });
-        cboEstadoPeli.Width = 110;
-        panelCrear.Controls.Add(Etiquetado("Estado:", cboEstadoPeli));
-        var contGeneros = new FlowLayoutPanel { AutoSize = true, Margin = new Padding(15, 0, 20, 0) };
-        contGeneros.Controls.Add(new Label { Text = "Géneros:", AutoSize = true });
-        contGeneros.Controls.Add(chkGenerosPeli);
-        panelCrear.Controls.Add(contGeneros);
-        var btnCrearPeli = NuevoBoton("➕ Película");
-        btnCrearPeli.Click += (_, _) => CrearPelicula();
-        panelCrear.Controls.Add(btnCrearPeli);
-
         cboClasifPeli.SelectedIndex = 0;
+        cboFormatoPeli.Items.AddRange(new[] { "2D", "3D", "IMAX", "4DX" });
         cboFormatoPeli.SelectedIndex = 0;
+        cboEstadoPeli.Items.AddRange(new[] { "Postulada", "Seleccionada", "Rechazada", "Premiada" });
         cboEstadoPeli.SelectedIndex = 0;
 
-        var panelCrearSala = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Top,
-            AutoSize = true,
-            Padding = new Padding(10),
-            WrapContents = true,
-            FlowDirection = FlowDirection.LeftToRight
-        };
-        panelCrearSala.Controls.Add(CrearLabel("╶  CREAR SALA  ╴", 0, 6));
-        panelCrearSala.Controls.Add(Etiquetado("Nombre:", txtNombreSala));
-        panelCrearSala.Controls.Add(Etiquetado("Capacidad:", nudCapacidadSala));
-        panelCrearSala.Controls.Add(Etiquetado("Sede:", cboSedeSala));
-        var btnCrearSala = NuevoBoton("➕ Sala");
-        btnCrearSala.Click += (_, _) => CrearSala();
-        panelCrearSala.Controls.Add(btnCrearSala);
+        var tlp = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(5) };
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 34));
 
-        var panelCrearSede = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Top,
-            AutoSize = true,
-            Padding = new Padding(10),
-            WrapContents = true,
-            FlowDirection = FlowDirection.LeftToRight
-        };
-        panelCrearSede.Controls.Add(CrearLabel("╶  CREAR SEDE  ╴", 0, 6));
-        panelCrearSede.Controls.Add(Etiquetado("Nombre:", txtNombreSede));
-        panelCrearSede.Controls.Add(Etiquetado("Dirección:", txtDirSede));
-        panelCrearSede.Controls.Add(Etiquetado("Ciudad:", txtCiudadSede));
-        panelCrearSede.Controls.Add(Etiquetado("Sitio web:", txtWebSede));
-        var btnCrearSede = NuevoBoton("➕ Sede");
-        btnCrearSede.Click += (_, _) => RegistrarSede();
-        panelCrearSede.Controls.Add(btnCrearSede);
+        var gbPeli = new GroupBox { Text = "Películas", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var tlpPeli = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
+        tlpPeli.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
+        tlpPeli.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var flowPeli = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowPeli.Controls.Add(Etiquetado("Título:", txtTituloPeli));
+        flowPeli.Controls.Add(Etiquetado("Año:", nudAnioPeli));
+        flowPeli.Controls.Add(Etiquetado("Duración:", nudDuracionPeli));
+        flowPeli.Controls.Add(Etiquetado("País:", txtPaisPeli));
+        flowPeli.Controls.Add(Etiquetado("Clasificación:", cboClasifPeli));
+        flowPeli.Controls.Add(Etiquetado("Formato:", cboFormatoPeli));
+        flowPeli.Controls.Add(Etiquetado("Estado:", cboEstadoPeli));
+        flowPeli.Controls.Add(Etiquetado("Sinopsis:", txtSinopsisPeli));
+        flowPeli.Controls.Add(Etiquetado("Géneros:", chkGenerosPeli));
+        var btnPeli = NuevoBoton("➕ Película");
+        btnPeli.Margin = new Padding(10, 18, 0, 0);
+        btnPeli.Click += (_, _) => CrearPelicula();
+        flowPeli.Controls.Add(btnPeli);
+        tlpPeli.Controls.Add(flowPeli, 0, 0);
+        gridPeliculas.Dock = DockStyle.Fill;
+        tlpPeli.Controls.Add(gridPeliculas, 0, 1);
+        gbPeli.Controls.Add(tlpPeli);
+        tlp.Controls.Add(gbPeli, 0, 0);
 
-        tab.Controls.Add(panelCrearSala);
-        tab.Controls.Add(panelCrearSede);
-        tab.Controls.Add(panelCrear);
+        var gbSede = new GroupBox { Text = "Sedes", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var tlpSede = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
+        tlpSede.RowStyles.Add(new RowStyle(SizeType.Absolute, 85));
+        tlpSede.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var flowSede = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowSede.Controls.Add(Etiquetado("Nombre:", txtNombreSede));
+        flowSede.Controls.Add(Etiquetado("Dirección:", txtDirSede));
+        flowSede.Controls.Add(Etiquetado("Ciudad:", txtCiudadSede));
+        flowSede.Controls.Add(Etiquetado("Sitio web:", txtWebSede));
+        var btnSede = NuevoBoton("➕ Sede");
+        btnSede.Margin = new Padding(10, 18, 0, 0);
+        btnSede.Click += (_, _) => RegistrarSede();
+        flowSede.Controls.Add(btnSede);
+        tlpSede.Controls.Add(flowSede, 0, 0);
+        gridSedes.Dock = DockStyle.Fill;
+        tlpSede.Controls.Add(gridSedes, 0, 1);
+        gbSede.Controls.Add(tlpSede);
+        tlp.Controls.Add(gbSede, 0, 1);
+
+        var gbSala = new GroupBox { Text = "Salas", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var tlpSala = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
+        tlpSala.RowStyles.Add(new RowStyle(SizeType.Absolute, 85));
+        tlpSala.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var flowSala = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowSala.Controls.Add(Etiquetado("Nombre:", txtNombreSala));
+        flowSala.Controls.Add(Etiquetado("Capacidad:", nudCapacidadSala));
+        flowSala.Controls.Add(Etiquetado("Sede:", cboSedeSala));
+        var btnSala = NuevoBoton("➕ Sala");
+        btnSala.Margin = new Padding(10, 18, 0, 0);
+        btnSala.Click += (_, _) => CrearSala();
+        flowSala.Controls.Add(btnSala);
+        tlpSala.Controls.Add(flowSala, 0, 0);
+        gridSalasList.Dock = DockStyle.Fill;
+        tlpSala.Controls.Add(gridSalasList, 0, 1);
+        gbSala.Controls.Add(tlpSala);
+        tlp.Controls.Add(gbSala, 0, 2);
+
+        tab.Controls.Add(tlp);
         return tab;
     }
 
@@ -366,8 +378,6 @@ public class MainForm : Form
     private TabPage CrearTabLogistica()
     {
         var tab = new TabPage("🏨 Logística y Patrocinios");
-        var flow = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoScroll = true,
-            FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(12) };
 
         cboHabitacion.Items.AddRange(new[] { "101","102","103","104","201","202","203","204","301","302","303","304","401","402","403","404","501","502" });
         cboTipoTraslado.Items.AddRange(new[] { "Vuelo", "Transfer", "Taxi" });
@@ -377,80 +387,73 @@ public class MainForm : Form
         cboTipoAporte.Items.AddRange(new[] { "Economico", "Especie" });
         cboTipoAporte.SelectedIndexChanged += (_, _) => nudMonto.Enabled = cboTipoAporte.Text == "Economico";
 
-        var lblAloj = new Label { Text = "══  ALOJAMIENTOS  ══", AutoSize = true,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold), ForeColor = Color.DarkBlue, Margin = new Padding(0, 6, 0, 4) };
-        flow.Controls.Add(lblAloj);
+        var tlp = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(5) };
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 34));
 
-        var pAloj = new Panel { Height = 70, Width = 900 };
-        pAloj.Controls.Add(CrearLabel("Invitado:", 0, 12));
-        cboInvitadoAloj.Location = new Point(65, 9); cboInvitadoAloj.Width = 200; pAloj.Controls.Add(cboInvitadoAloj);
-        pAloj.Controls.Add(CrearLabel("Hotel:", 285, 12));
-        cboHotel.Location = new Point(330, 9); cboHotel.Width = 200; pAloj.Controls.Add(cboHotel);
-        pAloj.Controls.Add(CrearLabel("Habitación:", 550, 12));
-        cboHabitacion.Location = new Point(630, 9); cboHabitacion.Width = 100; pAloj.Controls.Add(cboHabitacion);
-        pAloj.Controls.Add(CrearLabel("Check-in:", 0, 40));
-        dtpCheckIn.Location = new Point(65, 37); pAloj.Controls.Add(dtpCheckIn);
-        pAloj.Controls.Add(CrearLabel("Check-out:", 200, 40));
-        dtpCheckOut.Location = new Point(275, 37); pAloj.Controls.Add(dtpCheckOut);
-        var btnAloj = NuevoBoton("➕ Alojar"); btnAloj.Location = new Point(440, 36); btnAloj.Width = 90; btnAloj.Height = 28;
+        var gbAloj = new GroupBox { Text = "Alojamientos", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var tlpAloj = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
+        tlpAloj.RowStyles.Add(new RowStyle(SizeType.Absolute, 85));
+        tlpAloj.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var flowAloj = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowAloj.Controls.Add(Etiquetado("Invitado:", cboInvitadoAloj));
+        flowAloj.Controls.Add(Etiquetado("Hotel:", cboHotel));
+        flowAloj.Controls.Add(Etiquetado("Habitación:", cboHabitacion));
+        flowAloj.Controls.Add(Etiquetado("Check-in:", dtpCheckIn));
+        flowAloj.Controls.Add(Etiquetado("Check-out:", dtpCheckOut));
+        var btnAloj = NuevoBoton("➕ Alojar");
+        btnAloj.Margin = new Padding(10, 18, 0, 0);
         btnAloj.Click += (_, _) => AgregarAlojamiento();
-        pAloj.Controls.Add(btnAloj);
-        flow.Controls.Add(pAloj);
+        flowAloj.Controls.Add(btnAloj);
+        tlpAloj.Controls.Add(flowAloj, 0, 0);
+        gridAlojamientos.Dock = DockStyle.Fill;
+        tlpAloj.Controls.Add(gridAlojamientos, 0, 1);
+        gbAloj.Controls.Add(tlpAloj);
+        tlp.Controls.Add(gbAloj, 0, 0);
 
-        gridAlojamientos.Height = 100; gridAlojamientos.Width = 1160;
-        flow.Controls.Add(gridAlojamientos);
-
-        var lblTras = new Label { Text = "══  TRASLADOS  ══", AutoSize = true,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold), ForeColor = Color.DarkBlue, Margin = new Padding(0, 8, 0, 4) };
-        flow.Controls.Add(lblTras);
-
-        var pTras = new Panel { Height = 70, Width = 900 };
-        pTras.Controls.Add(CrearLabel("Invitado:", 0, 12));
-        cboInvitadoTras.Location = new Point(65, 9); cboInvitadoTras.Width = 200; pTras.Controls.Add(cboInvitadoTras);
-        pTras.Controls.Add(CrearLabel("Tipo:", 285, 12));
-        cboTipoTraslado.Location = new Point(320, 9); cboTipoTraslado.Width = 90; pTras.Controls.Add(cboTipoTraslado);
-        pTras.Controls.Add(CrearLabel("Origen:", 430, 12));
-        cboOrigen.Location = new Point(485, 9); cboOrigen.Width = 140; pTras.Controls.Add(cboOrigen);
-        pTras.Controls.Add(CrearLabel("Destino:", 645, 12));
-        cboDestino.Location = new Point(700, 9); cboDestino.Width = 140; pTras.Controls.Add(cboDestino);
-        pTras.Controls.Add(CrearLabel("Fecha:", 0, 40));
-        dtpFechaTras.Location = new Point(50, 37); pTras.Controls.Add(dtpFechaTras);
-        pTras.Controls.Add(CrearLabel("Vuelo:", 200, 40));
-        cboVuelo.Location = new Point(245, 37); cboVuelo.Width = 100; pTras.Controls.Add(cboVuelo);
-        var btnTras = NuevoBoton("➕ Trasladar"); btnTras.Location = new Point(380, 36); btnTras.Width = 100; btnTras.Height = 28;
+        var gbTras = new GroupBox { Text = "Traslados", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var tlpTras = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
+        tlpTras.RowStyles.Add(new RowStyle(SizeType.Absolute, 85));
+        tlpTras.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var flowTras = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowTras.Controls.Add(Etiquetado("Invitado:", cboInvitadoTras));
+        flowTras.Controls.Add(Etiquetado("Tipo:", cboTipoTraslado));
+        flowTras.Controls.Add(Etiquetado("Origen:", cboOrigen));
+        flowTras.Controls.Add(Etiquetado("Destino:", cboDestino));
+        flowTras.Controls.Add(Etiquetado("Fecha:", dtpFechaTras));
+        flowTras.Controls.Add(Etiquetado("Vuelo:", cboVuelo));
+        var btnTras = NuevoBoton("➕ Trasladar");
+        btnTras.Margin = new Padding(10, 18, 0, 0);
         btnTras.Click += (_, _) => AgregarTraslado();
-        pTras.Controls.Add(btnTras);
-        flow.Controls.Add(pTras);
+        flowTras.Controls.Add(btnTras);
+        tlpTras.Controls.Add(flowTras, 0, 0);
+        gridTraslados.Dock = DockStyle.Fill;
+        tlpTras.Controls.Add(gridTraslados, 0, 1);
+        gbTras.Controls.Add(tlpTras);
+        tlp.Controls.Add(gbTras, 0, 1);
 
-        gridTraslados.Height = 100; gridTraslados.Width = 1160;
-        flow.Controls.Add(gridTraslados);
-
-        var lblPat = new Label { Text = "══  PATROCINIOS  ══", AutoSize = true,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold), ForeColor = Color.DarkGreen, Margin = new Padding(0, 8, 0, 4) };
-        flow.Controls.Add(lblPat);
-
-        var pPat = new Panel { Height = 80, Width = 950 };
-        pPat.Controls.Add(CrearLabel("Patrocinador:", 0, 12));
-        cboPatrocinador.Location = new Point(100, 9); cboPatrocinador.Width = 200; pPat.Controls.Add(cboPatrocinador);
-        pPat.Controls.Add(CrearLabel("Edición:", 315, 12));
-        cboEdicionPat.Location = new Point(380, 9); cboEdicionPat.Width = 160; pPat.Controls.Add(cboEdicionPat);
-        pPat.Controls.Add(CrearLabel("Tipo:", 555, 12));
-        cboTipoAporte.Location = new Point(595, 9); pPat.Controls.Add(cboTipoAporte);
-        pPat.Controls.Add(CrearLabel("Monto Bs:", 700, 12));
-        nudMonto.Location = new Point(775, 9); pPat.Controls.Add(nudMonto);
-        var lblMin = CrearLabel("mín. 1", 880, 12); lblMin.ForeColor = Color.Gray; lblMin.Font = new Font("Segoe UI", 8f);
-        pPat.Controls.Add(lblMin);
-        pPat.Controls.Add(CrearLabel("Descripción:", 0, 48));
-        txtDescAporte.Location = new Point(100, 45); txtDescAporte.Width = 500; pPat.Controls.Add(txtDescAporte);
-        var btnPat = NuevoBoton("➕ Registrar Patrocinio"); btnPat.Location = new Point(620, 42);
+        var gbPat = new GroupBox { Text = "Patrocinios", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var tlpPat = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
+        tlpPat.RowStyles.Add(new RowStyle(SizeType.Absolute, 85));
+        tlpPat.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var flowPat = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowPat.Controls.Add(Etiquetado("Patrocinador:", cboPatrocinador));
+        flowPat.Controls.Add(Etiquetado("Edición:", cboEdicionPat));
+        flowPat.Controls.Add(Etiquetado("Tipo:", cboTipoAporte));
+        flowPat.Controls.Add(Etiquetado("Monto Bs:", nudMonto));
+        flowPat.Controls.Add(Etiquetado("Descripción:", txtDescAporte));
+        var btnPat = NuevoBoton("➕ Registrar Patrocinio");
+        btnPat.Margin = new Padding(10, 18, 0, 0);
         btnPat.Click += (_, _) => AgregarPatrocinio();
-        pPat.Controls.Add(btnPat);
-        flow.Controls.Add(pPat);
+        flowPat.Controls.Add(btnPat);
+        tlpPat.Controls.Add(flowPat, 0, 0);
+        gridPatrocinios.Dock = DockStyle.Fill;
+        tlpPat.Controls.Add(gridPatrocinios, 0, 1);
+        gbPat.Controls.Add(tlpPat);
+        tlp.Controls.Add(gbPat, 0, 2);
 
-        gridPatrocinios.Height = 150; gridPatrocinios.Width = 1160;
-        flow.Controls.Add(gridPatrocinios);
-
-        tab.Controls.Add(flow);
+        tab.Controls.Add(tlp);
         return tab;
     }
 
@@ -458,30 +461,75 @@ public class MainForm : Form
     {
         var tab = new TabPage("🎪 Eventos Paralelos");
 
-        var panelSup = NuevoPanelSuperior(50);
-        panelSup.Controls.Add(Etiquetado("Seleccionar evento:", cboEvento));
+        cboTipoEvento.Items.AddRange(new[] { "Masterclass", "Taller", "Coctel" });
+        cboTipoEvento.SelectedIndex = 0;
 
-        gridEventos.Dock = DockStyle.Top;
-        gridEventos.Height = 120;
-        tab.Controls.Add(gridEventos);
-        tab.Controls.Add(panelSup);
+        var tlp = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(5) };
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 34));
 
-        var panelInf = NuevoPanelSuperior(120);
-        panelInf.Controls.Add(Etiquetado("Expositor:", cboNuevoExpositor));
-        var btnAgregarExp = NuevoBoton("➕ Asignar Expositor");
-        btnAgregarExp.Click += (_, _) => AgregarExpositor();
-        panelInf.Controls.Add(btnAgregarExp);
-        var btnQuitarExp = NuevoBoton("➖ Quitar Expositor");
-        btnQuitarExp.Click += (_, _) => QuitarExpositor();
-        panelInf.Controls.Add(btnQuitarExp);
-        tab.Controls.Add(panelInf);
-
-        gridExpositores.Dock = DockStyle.Top;
-        gridExpositores.Height = 130;
-        tab.Controls.Add(gridExpositores);
-
+        /* ── 1. Registrar Asistentes ── */
+        var gbReg = new GroupBox { Text = "Registrar Asistentes", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var tlpReg = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
+        tlpReg.RowStyles.Add(new RowStyle(SizeType.Absolute, 85));
+        tlpReg.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var flowReg = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowReg.Controls.Add(Etiquetado("Evento:", cboEvento));
+        flowReg.Controls.Add(Etiquetado("Asistente:", cboAsistenteEvento));
+        var btnReg = NuevoBoton("➕ Registrar");
+        btnReg.Margin = new Padding(10, 18, 0, 0);
+        btnReg.Click += (_, _) => RegistrarAsistenteEvento();
+        flowReg.Controls.Add(btnReg);
+        tlpReg.Controls.Add(flowReg, 0, 0);
         gridAsistentesEv.Dock = DockStyle.Fill;
-        tab.Controls.Add(gridAsistentesEv);
+        tlpReg.Controls.Add(gridAsistentesEv, 0, 1);
+        gbReg.Controls.Add(tlpReg);
+        tlp.Controls.Add(gbReg, 0, 0);
+
+        /* ── 2. Asignar Expositores ── */
+        var gbExp = new GroupBox { Text = "Asignar Expositores", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var tlpExp = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
+        tlpExp.RowStyles.Add(new RowStyle(SizeType.Absolute, 85));
+        tlpExp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var flowExp = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowExp.Controls.Add(Etiquetado("Expositor:", cboNuevoExpositor));
+        var btnAgregarExp = NuevoBoton("➕ Asignar Expositor");
+        btnAgregarExp.Margin = new Padding(10, 18, 0, 0);
+        btnAgregarExp.Click += (_, _) => AgregarExpositor();
+        flowExp.Controls.Add(btnAgregarExp);
+        var btnQuitarExp = NuevoBoton("➖ Quitar Expositor");
+        btnQuitarExp.Margin = new Padding(5, 18, 0, 0);
+        btnQuitarExp.Click += (_, _) => QuitarExpositor();
+        flowExp.Controls.Add(btnQuitarExp);
+        tlpExp.Controls.Add(flowExp, 0, 0);
+        gridExpositores.Dock = DockStyle.Fill;
+        tlpExp.Controls.Add(gridExpositores, 0, 1);
+        gbExp.Controls.Add(tlpExp);
+        tlp.Controls.Add(gbExp, 0, 1);
+
+        /* ── 3. Crear Evento ── */
+        var gbCrear = new GroupBox { Text = "Crear Evento Paralelo", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var tlpCrear = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
+        tlpCrear.RowStyles.Add(new RowStyle(SizeType.Absolute, 85));
+        tlpCrear.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var flowCrear = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowCrear.Controls.Add(Etiquetado("Nombre:", txtNombreEvento));
+        flowCrear.Controls.Add(Etiquetado("Tipo:", cboTipoEvento));
+        flowCrear.Controls.Add(Etiquetado("Fecha y hora:", dtpFechaEvento));
+        flowCrear.Controls.Add(Etiquetado("Aforo:", nudAforoEvento));
+        flowCrear.Controls.Add(Etiquetado("Costo Bs:", nudCostoEvento));
+        var btnCrearEv = NuevoBoton("➕ Crear Evento");
+        btnCrearEv.Margin = new Padding(10, 18, 0, 0);
+        btnCrearEv.Click += (_, _) => CrearEventoParalelo();
+        flowCrear.Controls.Add(btnCrearEv);
+        tlpCrear.Controls.Add(flowCrear, 0, 0);
+        gridEventos.Dock = DockStyle.Fill;
+        tlpCrear.Controls.Add(gridEventos, 0, 1);
+        gbCrear.Controls.Add(tlpCrear);
+        tlp.Controls.Add(gbCrear, 0, 2);
+
+        tab.Controls.Add(tlp);
 
         cboEvento.SelectedIndexChanged += (_, _) => CargarDetalleEvento();
 
@@ -491,70 +539,67 @@ public class MainForm : Form
     private TabPage CrearTabCompetencia()
     {
         var tab = new TabPage("🎬 Jurados y Competencia");
-        var flow = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoScroll = true,
-            FlowDirection = FlowDirection.TopDown, WrapContents = false,
-            Padding = new Padding(10) };
 
-        var panelSup = new Panel { Height = 50, Width = 900 };
-        panelSup.Controls.Add(new Label { Text = "Categoría:", AutoSize = true, Top = 12 });
-        cboCategoria.Location = new Point(80, 10);
-        cboCategoria.Width = 350;
-        panelSup.Controls.Add(cboCategoria);
-        flow.Controls.Add(panelSup);
+        var tlp = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(5) };
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 34));
+
+        /* ── 1. Categorías y Jurados ── */
+        var gbCat = new GroupBox { Text = "Categorías y Jurados", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var tlpCat = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
+        tlpCat.RowStyles.Add(new RowStyle(SizeType.Absolute, 85));
+        tlpCat.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var flowCat = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowCat.Controls.Add(Etiquetado("Categoría:", cboCategoria));
+        tlpCat.Controls.Add(flowCat, 0, 0);
+        gridMiembrosCat.Dock = DockStyle.Fill;
+        tlpCat.Controls.Add(gridMiembrosCat, 0, 1);
+        gbCat.Controls.Add(tlpCat);
+        tlp.Controls.Add(gbCat, 0, 0);
+
+        /* ── 2. Evaluaciones ── */
+        var gbEval = new GroupBox { Text = "Registrar Evaluación", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var tlpEval = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
+        tlpEval.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
+        tlpEval.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var flowEval = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowEval.Controls.Add(Etiquetado("Miembro:", cboMiembroEval));
+        flowEval.Controls.Add(Etiquetado("Película:", cboPeliculaEval));
+        flowEval.Controls.Add(Etiquetado("Puntaje (1-10):", nudPuntuacion));
+        flowEval.Controls.Add(Etiquetado("Comentario:", txtComentario));
+        var btnEval = NuevoBoton("⭐ Registrar Evaluación");
+        btnEval.Margin = new Padding(10, 18, 0, 0);
+        btnEval.Click += (_, _) => RegistrarEvaluacion();
+        flowEval.Controls.Add(btnEval);
+        tlpEval.Controls.Add(flowEval, 0, 0);
+        gridEval.Dock = DockStyle.Fill;
+        tlpEval.Controls.Add(gridEval, 0, 1);
+        gbEval.Controls.Add(tlpEval);
+        tlp.Controls.Add(gbEval, 0, 1);
+
+        /* ── 3. Premios ── */
+        var gbPrem = new GroupBox { Text = "Registrar Premio (Ganador por Categoría)", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var tlpPrem = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
+        tlpPrem.RowStyles.Add(new RowStyle(SizeType.Absolute, 85));
+        tlpPrem.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var flowPrem = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowPrem.Controls.Add(Etiquetado("Categoría:", cboCategoriaPrem));
+        flowPrem.Controls.Add(Etiquetado("Película ganadora:", cboPeliculaPrem));
+        var btnPrem = NuevoBoton("🏅 Registrar Premio");
+        btnPrem.Margin = new Padding(10, 18, 0, 0);
+        btnPrem.Click += (_, _) => RegistrarPremio();
+        flowPrem.Controls.Add(btnPrem);
+        tlpPrem.Controls.Add(flowPrem, 0, 0);
+        gridPremios.Dock = DockStyle.Fill;
+        tlpPrem.Controls.Add(gridPremios, 0, 1);
+        gbPrem.Controls.Add(tlpPrem);
+        tlp.Controls.Add(gbPrem, 0, 2);
+
+        tab.Controls.Add(tlp);
+
         cboCategoria.SelectedIndexChanged += (_, _) => CargarDetalleCategoria();
 
-        gridMiembrosCat.Height = 90; gridMiembrosCat.Width = 900;
-        flow.Controls.Add(gridMiembrosCat);
-        flow.SetFlowBreak(gridMiembrosCat, true);
-
-        var lblEval = new Label { Text = "══  REGISTRAR EVALUACIÓN  ══", AutoSize = true,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold), ForeColor = Color.DarkBlue,
-            Margin = new Padding(0, 6, 0, 2) };
-        flow.Controls.Add(lblEval);
-
-        var panelEval = new Panel { Height = 38, Width = 900 };
-        var lblM = new Label { Text = "Miembro:", AutoSize = true, Top = 10 }; lblM.Location = new Point(0, 10);
-        cboMiembroEval.Location = new Point(70, 7); cboMiembroEval.Width = 200;
-        var lblP = new Label { Text = "Película:", AutoSize = true, Top = 10 }; lblP.Location = new Point(290, 10);
-        cboPeliculaEval.Location = new Point(350, 7); cboPeliculaEval.Width = 200;
-        var lblPt = new Label { Text = "Puntaje (1-10):", AutoSize = true, Top = 10 }; lblPt.Location = new Point(570, 10);
-        nudPuntuacion.Location = new Point(670, 5);
-        panelEval.Controls.AddRange(new Control[] { lblM, cboMiembroEval, lblP, cboPeliculaEval, lblPt, nudPuntuacion });
-        flow.Controls.Add(panelEval);
-
-        txtComentario.Height = 50; txtComentario.Width = 400;
-        var panelCom = new Panel { Height = 60, Width = 900 };
-        var lblC = new Label { Text = "Comentario:", AutoSize = true, Top = 15 };
-        txtComentario.Location = new Point(85, 5);
-        var btnEval = NuevoBoton("⭐ Registrar Evaluación");
-        btnEval.Location = new Point(500, 8);
-        btnEval.Click += (_, _) => RegistrarEvaluacion();
-        panelCom.Controls.AddRange(new Control[] { lblC, txtComentario, btnEval });
-        flow.Controls.Add(panelCom);
-
-        gridEval.Height = 120; gridEval.Width = 900;
-        flow.Controls.Add(gridEval);
-
-        var lblPrem = new Label { Text = "══  REGISTRAR PREMIO (Ganador por Categoría)  ══", AutoSize = true,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold), ForeColor = Color.DarkGreen,
-            Margin = new Padding(0, 6, 0, 2) };
-        flow.Controls.Add(lblPrem);
-
-        var panelPrem = new Panel { Height = 38, Width = 900 };
-        var lblCP = new Label { Text = "Categoría:", AutoSize = true, Top = 10 }; lblCP.Location = new Point(0, 10);
-        cboCategoriaPrem.Location = new Point(70, 7); cboCategoriaPrem.Width = 200;
-        var lblGP = new Label { Text = "Película ganadora:", AutoSize = true, Top = 10 }; lblGP.Location = new Point(290, 10);
-        cboPeliculaPrem.Location = new Point(410, 7); cboPeliculaPrem.Width = 200;
-        var btnPrem = NuevoBoton("🏅 Registrar Premio");
-        btnPrem.Location = new Point(630, 3);
-        btnPrem.Click += (_, _) => RegistrarPremio();
-        panelPrem.Controls.AddRange(new Control[] { lblCP, cboCategoriaPrem, lblGP, cboPeliculaPrem, btnPrem });
-        flow.Controls.Add(panelPrem);
-
-        gridPremios.Height = 180; gridPremios.Width = 900;
-        flow.Controls.Add(gridPremios);
-
-        tab.Controls.Add(flow);
         return tab;
     }
 
@@ -622,6 +667,7 @@ public class MainForm : Form
             CargarEventosIniciales();
             CargarLogisticaInicial();
             CargarCompetenciaInicial();
+            RefrescarGrillasAdmin();
             CargarEdicionesCombo(cboAnioRanking);
             CargarEdicionesCombo(cboAnioPremiacion);
             CargarEdicionesCombo(cboAnioFinanciero);
@@ -654,6 +700,16 @@ public class MainForm : Form
 
     private void CargarAsistentesGrilla() =>
         Intentar(() => gridAsistentes.DataSource = ProcedimientosBD.ListarAsistentes());
+
+    private void RefrescarGrillasAdmin()
+    {
+        Intentar(() =>
+        {
+            gridPeliculas.DataSource = ProcedimientosBD.ListarPeliculas();
+            gridSedes.DataSource = ProcedimientosBD.ListarSedes();
+            gridSalasList.DataSource = ProcedimientosBD.ListarSalas();
+        });
+    }
 
     /* ── Logística y Patrocinios ── */
 
@@ -852,6 +908,7 @@ public class MainForm : Form
             EnlazarCombo(cboPelicula, peliculas.Copy(), "Titulo", "IdPelicula");
             EnlazarCombo(cboPeliculaAg, peliculas.Copy(), "Titulo", "IdPelicula");
             LimpiarFormularioPelicula();
+            RefrescarGrillasAdmin();
         });
     }
 
@@ -881,6 +938,7 @@ public class MainForm : Form
             EnlazarCombo(cboSala, salas, "Descripcion_UI", "IdSala");
             txtNombreSala.Clear();
             nudCapacidadSala.Value = 1;
+            RefrescarGrillasAdmin();
         });
     }
 
@@ -896,6 +954,7 @@ public class MainForm : Form
             DataTable sedes = ProcedimientosBD.ListarSedes();
             EnlazarCombo(cboSedeSala, sedes, "NombreSede", "IdSede");
             txtNombreSede.Clear(); txtDirSede.Clear(); txtCiudadSede.Clear(); txtWebSede.Clear();
+            RefrescarGrillasAdmin();
         });
     }
 
@@ -955,6 +1014,9 @@ public class MainForm : Form
             DataTable personal = ProcedimientosBD.ListarPersonal();
             EnlazarCombo(cboNuevoExpositor, personal, "Nombre", "IdPersonal");
 
+            DataTable asistentes = ProcedimientosBD.ListarAsistentes();
+            EnlazarCombo(cboAsistenteEvento, asistentes, "Nombre", "IdAsistente");
+
             gridEventos.DataSource = ProcedimientosBD.ListarEventosParalelos();
             CargarDetalleEvento();
         });
@@ -968,6 +1030,24 @@ public class MainForm : Form
             int idEvento = Convert.ToInt32(drv.Row["IdEvento"]);
             gridExpositores.DataSource = ProcedimientosBD.ListarExpositoresPorEvento(idEvento);
             gridAsistentesEv.DataSource = ProcedimientosBD.ListarAsistentesPorEvento(idEvento);
+        });
+    }
+
+    private void RegistrarAsistenteEvento()
+    {
+        if (cboEvento.SelectedItem is not DataRowView drvEvento ||
+            cboAsistenteEvento.SelectedItem is not DataRowView drvAsist)
+        {
+            Aviso("Seleccione un evento y un asistente.");
+            return;
+        }
+        int idEvento = Convert.ToInt32(drvEvento.Row["IdEvento"]);
+        int idAsistente = Convert.ToInt32(drvAsist.Row["IdAsistente"]);
+        Intentar(() =>
+        {
+            string respuesta = ProcedimientosBD.RegistrarAsistenteEvento(idAsistente, idEvento);
+            Exito(respuesta);
+            CargarDetalleEvento();
         });
     }
 
@@ -1007,6 +1087,25 @@ public class MainForm : Form
         {
             Aviso("Seleccione un expositor de la lista para quitar.");
         }
+    }
+
+    private void CrearEventoParalelo()
+    {
+        if (string.IsNullOrWhiteSpace(txtNombreEvento.Text)) { Aviso("Ingrese el nombre del evento."); return; }
+        if (cboTipoEvento.SelectedItem == null) { Aviso("Seleccione un tipo de evento."); return; }
+        Intentar(() =>
+        {
+            string respuesta = ProcedimientosBD.CrearEventoParalelo(
+                txtNombreEvento.Text.Trim(), cboTipoEvento.Text,
+                dtpFechaEvento.Value, (int)nudAforoEvento.Value, nudCostoEvento.Value);
+            Exito(respuesta);
+            txtNombreEvento.Clear();
+            cboTipoEvento.SelectedIndex = 0;
+            dtpFechaEvento.Value = DateTime.Today.AddDays(1).AddHours(19);
+            nudAforoEvento.Value = 1;
+            nudCostoEvento.Value = 0;
+            CargarEventosIniciales();
+        });
     }
 
     /* ── Competencia y Jurados ─────────────────────────────── */

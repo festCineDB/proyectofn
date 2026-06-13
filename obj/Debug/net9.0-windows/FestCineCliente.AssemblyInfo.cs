@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FestCineCliente")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b223aa2646867387442dc6d4c0e7aa7f73f5cf12")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4b57029ef8f08787cd371cbac808ea445235b2cf")]
 [assembly: System.Reflection.AssemblyProductAttribute("FestCineCliente")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FestCineCliente")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

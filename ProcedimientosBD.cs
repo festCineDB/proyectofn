@@ -175,6 +175,37 @@ public static class ProcedimientosBD
         return respuesta.Value?.ToString() ?? "Operacion completada.";
     }
 
+    public static string RegistrarAsistenteEvento(int idAsistente, int idEvento)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("RegistrarAsistenteEvento", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@IdAsistente", idAsistente);
+        comando.Parameters.AddWithValue("@IdEvento", idEvento);
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
+
+    public static string CrearEventoParalelo(string nombreEvento, string tipoEvento, DateTime fechaHora, int aforo, decimal costoInscripcion)
+    {
+        using SqlConnection conn = AbrirConexion();
+        using var comando = new SqlCommand("sp_CrearEventoParalelo", conn);
+        comando.CommandType = CommandType.StoredProcedure;
+        comando.Parameters.AddWithValue("@NombreEvento", nombreEvento);
+        comando.Parameters.AddWithValue("@TipoEvento", tipoEvento);
+        comando.Parameters.AddWithValue("@FechaHora", fechaHora);
+        comando.Parameters.AddWithValue("@Aforo", aforo);
+        comando.Parameters.AddWithValue("@CostoInscripcion", costoInscripcion);
+        var respuesta = new SqlParameter("@Respuesta", SqlDbType.VarChar, 300)
+        { Direction = ParameterDirection.Output };
+        comando.Parameters.Add(respuesta);
+        comando.ExecuteNonQuery();
+        return respuesta.Value?.ToString() ?? "Operacion completada.";
+    }
+
     /* ── Competencia y Jurados ─────────────────────────────── */
 
     public static DataTable ListarCategorias()          => EjecutarSpTabla("sp_ListarCategorias");
