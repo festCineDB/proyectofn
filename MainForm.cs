@@ -84,6 +84,12 @@ public class MainForm : Form
     private readonly DataGridView gridPeliculas = NuevaGrilla();
     private readonly DataGridView gridSedes = NuevaGrilla();
     private readonly DataGridView gridSalasList = NuevaGrilla();
+    private int? idPeliEditando;
+    private int? idSedeEditando;
+    private int? idSalaEditando;
+    private Button btnCrearPeli = null!;
+    private Button btnCrearSede = null!;
+    private Button btnCrearSala = null!;
 
     /* ── Logística y Patrocinios ── */
     private readonly ComboBox cboInvitadoAloj   = NuevoCombo();
@@ -107,11 +113,16 @@ public class MainForm : Form
     private readonly DataGridView gridPatrocinios = NuevaGrilla();
 
     /* ── Competencia y Jurados ── */
+    private bool _cargandoCategorias;
     private readonly ComboBox cboCategoria    = NuevoCombo();
     private readonly ComboBox cboMiembroEval  = NuevoCombo();
     private readonly ComboBox cboPeliculaEval = NuevoCombo();
     private readonly ComboBox cboPeliculaPrem = NuevoCombo();
     private readonly ComboBox cboCategoriaPrem = NuevoCombo();
+    private readonly ComboBox cboAnioCompetencia = NuevoCombo();
+    private readonly ComboBox cboPeliculaAsignar = NuevoCombo();
+    private readonly ComboBox cboCategoriaAsignar = NuevoCombo();
+    private readonly DataGridView gridPelisAsignadas = NuevaGrilla();
     private readonly NumericUpDown nudPuntuacion = new() { Minimum = 1, Maximum = 10, Value = 5, Width = 80 };
     private readonly TextBox txtComentario = new() { Width = 300, Height = 60, Multiline = true };
     private readonly DataGridView gridEval = NuevaGrilla();
@@ -282,15 +293,37 @@ public class MainForm : Form
         cboEstadoPeli.SelectedIndex = 0;
 
         var tlp = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(5) };
-        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
-        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
-        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 34));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 40));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 30));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 30));
 
         var gbPeli = new GroupBox { Text = "Películas", Dock = DockStyle.Fill, Padding = new Padding(8) };
         var tlpPeli = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
-        tlpPeli.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
+        tlpPeli.RowStyles.Add(new RowStyle(SizeType.Absolute, 110));
         tlpPeli.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         var flowPeli = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        btnCrearPeli = NuevoBoton("➕ Crear Película");
+        btnCrearPeli.Margin = new Padding(0, 0, 10, 0);
+        btnCrearPeli.Click += (_, _) => CrearPelicula();
+        flowPeli.Controls.Add(btnCrearPeli);
+        var btnEditPeli = NuevoBoton("✏️ Editar");
+        btnEditPeli.Margin = new Padding(0, 0, 20, 0);
+        btnEditPeli.Click += (_, _) =>
+        {
+            if (gridPeliculas.CurrentRow?.DataBoundItem is not DataRowView drv) { Aviso("Seleccione una película de la tabla."); return; }
+            txtTituloPeli.Text = drv.Row["Titulo"]?.ToString();
+            nudAnioPeli.Value = Convert.ToInt32(drv.Row["AnioProd"]);
+            nudDuracionPeli.Value = Convert.ToInt32(drv.Row["Duracion"]);
+            txtPaisPeli.Text = drv.Row["PaisOrigen"]?.ToString();
+            if (drv.Row.Table.Columns.Contains("Sinopsis"))
+                txtSinopsisPeli.Text = drv.Row["Sinopsis"]?.ToString();
+            cboClasifPeli.Text = drv.Row["Clasificacion"]?.ToString();
+            cboFormatoPeli.Text = drv.Row["Formato"]?.ToString();
+            cboEstadoPeli.Text = drv.Row["Estado"]?.ToString();
+            idPeliEditando = Convert.ToInt32(drv.Row["IdPelicula"]);
+            btnCrearPeli.Text = "💾 Guardar Cambios";
+        };
+        flowPeli.Controls.Add(btnEditPeli);
         flowPeli.Controls.Add(Etiquetado("Título:", txtTituloPeli));
         flowPeli.Controls.Add(Etiquetado("Año:", nudAnioPeli));
         flowPeli.Controls.Add(Etiquetado("Duración:", nudDuracionPeli));
@@ -300,10 +333,6 @@ public class MainForm : Form
         flowPeli.Controls.Add(Etiquetado("Estado:", cboEstadoPeli));
         flowPeli.Controls.Add(Etiquetado("Sinopsis:", txtSinopsisPeli));
         flowPeli.Controls.Add(Etiquetado("Géneros:", chkGenerosPeli));
-        var btnPeli = NuevoBoton("➕ Película");
-        btnPeli.Margin = new Padding(10, 18, 0, 0);
-        btnPeli.Click += (_, _) => CrearPelicula();
-        flowPeli.Controls.Add(btnPeli);
         tlpPeli.Controls.Add(flowPeli, 0, 0);
         gridPeliculas.Dock = DockStyle.Fill;
         tlpPeli.Controls.Add(gridPeliculas, 0, 1);
@@ -312,17 +341,33 @@ public class MainForm : Form
 
         var gbSede = new GroupBox { Text = "Sedes", Dock = DockStyle.Fill, Padding = new Padding(8) };
         var tlpSede = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
-        tlpSede.RowStyles.Add(new RowStyle(SizeType.Absolute, 85));
+        tlpSede.RowStyles.Add(new RowStyle(SizeType.Absolute, 65));
         tlpSede.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         var flowSede = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
         flowSede.Controls.Add(Etiquetado("Nombre:", txtNombreSede));
         flowSede.Controls.Add(Etiquetado("Dirección:", txtDirSede));
         flowSede.Controls.Add(Etiquetado("Ciudad:", txtCiudadSede));
         flowSede.Controls.Add(Etiquetado("Sitio web:", txtWebSede));
-        var btnSede = NuevoBoton("➕ Sede");
-        btnSede.Margin = new Padding(10, 18, 0, 0);
-        btnSede.Click += (_, _) => RegistrarSede();
-        flowSede.Controls.Add(btnSede);
+        btnCrearSede = NuevoBoton("➕ Sede");
+        btnCrearSede.Margin = new Padding(10, 18, 0, 0);
+        btnCrearSede.Click += (_, _) => RegistrarSede();
+        flowSede.Controls.Add(btnCrearSede);
+        var btnEditSede = NuevoBoton("✏️ Editar");
+        btnEditSede.Margin = new Padding(5, 18, 0, 0);
+        btnEditSede.Click += (_, _) =>
+        {
+            if (gridSedes.CurrentRow?.DataBoundItem is not DataRowView drv) { Aviso("Seleccione una sede de la tabla."); return; }
+            txtNombreSede.Text = drv.Row["NombreSede"]?.ToString();
+            if (drv.Row.Table.Columns.Contains("Direccion"))
+                txtDirSede.Text = drv.Row["Direccion"]?.ToString();
+            if (drv.Row.Table.Columns.Contains("Ciudad"))
+                txtCiudadSede.Text = drv.Row["Ciudad"]?.ToString();
+            if (drv.Row.Table.Columns.Contains("SitioWeb"))
+                txtWebSede.Text = drv.Row["SitioWeb"]?.ToString();
+            idSedeEditando = Convert.ToInt32(drv.Row["IdSede"]);
+            btnCrearSede.Text = "💾 Guardar Cambios";
+        };
+        flowSede.Controls.Add(btnEditSede);
         tlpSede.Controls.Add(flowSede, 0, 0);
         gridSedes.Dock = DockStyle.Fill;
         tlpSede.Controls.Add(gridSedes, 0, 1);
@@ -337,10 +382,26 @@ public class MainForm : Form
         flowSala.Controls.Add(Etiquetado("Nombre:", txtNombreSala));
         flowSala.Controls.Add(Etiquetado("Capacidad:", nudCapacidadSala));
         flowSala.Controls.Add(Etiquetado("Sede:", cboSedeSala));
-        var btnSala = NuevoBoton("➕ Sala");
-        btnSala.Margin = new Padding(10, 18, 0, 0);
-        btnSala.Click += (_, _) => CrearSala();
-        flowSala.Controls.Add(btnSala);
+        btnCrearSala = NuevoBoton("➕ Sala");
+        btnCrearSala.Margin = new Padding(10, 18, 0, 0);
+        btnCrearSala.Click += (_, _) => CrearSala();
+        flowSala.Controls.Add(btnCrearSala);
+        var btnEditSala = NuevoBoton("✏️ Editar");
+        btnEditSala.Margin = new Padding(5, 18, 0, 0);
+        btnEditSala.Click += (_, _) =>
+        {
+            if (gridSalasList.CurrentRow?.DataBoundItem is not DataRowView drv) { Aviso("Seleccione una sala de la tabla."); return; }
+            txtNombreSala.Text = drv.Row["NombreSala"]?.ToString();
+            nudCapacidadSala.Value = Convert.ToInt32(drv.Row["Capacidad"]);
+            if (cboSedeSala.DataSource is DataTable dt)
+            {
+                var row = dt.AsEnumerable().FirstOrDefault(r => r["IdSede"].ToString() == drv.Row["IdSede"]?.ToString());
+                if (row != null) cboSedeSala.SelectedValue = row["IdSede"];
+            }
+            idSalaEditando = Convert.ToInt32(drv.Row["IdSala"]);
+            btnCrearSala.Text = "💾 Guardar Cambios";
+        };
+        flowSala.Controls.Add(btnEditSala);
         tlpSala.Controls.Add(flowSala, 0, 0);
         gridSalasList.Dock = DockStyle.Fill;
         tlpSala.Controls.Add(gridSalasList, 0, 1);
@@ -540,15 +601,25 @@ public class MainForm : Form
     {
         var tab = new TabPage("🎬 Jurados y Competencia");
 
-        var tlp = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(5) };
+        var tlp = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Padding = new Padding(5) };
+        tlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
         tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
         tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
         tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 34));
 
-        /* ── 1. Categorías y Jurados ── */
+        /* ── Filtro por año (tope) ── */
+        var flowAnio = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowAnio.Controls.Add(Etiquetado("Año Edición:", cboAnioCompetencia));
+        tlp.Controls.Add(flowAnio, 0, 0);
+
+        /* ── 1. Categorías y Jurados + Asignar Película (2 columnas) ── */
+        var tlpRow1 = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Padding = new Padding(0) };
+        tlpRow1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        tlpRow1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+
         var gbCat = new GroupBox { Text = "Categorías y Jurados", Dock = DockStyle.Fill, Padding = new Padding(8) };
         var tlpCat = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
-        tlpCat.RowStyles.Add(new RowStyle(SizeType.Absolute, 85));
+        tlpCat.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
         tlpCat.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         var flowCat = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
         flowCat.Controls.Add(Etiquetado("Categoría:", cboCategoria));
@@ -556,7 +627,26 @@ public class MainForm : Form
         gridMiembrosCat.Dock = DockStyle.Fill;
         tlpCat.Controls.Add(gridMiembrosCat, 0, 1);
         gbCat.Controls.Add(tlpCat);
-        tlp.Controls.Add(gbCat, 0, 0);
+        tlpRow1.Controls.Add(gbCat, 1, 0);
+
+        var gbAsig = new GroupBox { Text = "Asignar Categoria a Pelicula", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var tlpAsig = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(5) };
+        tlpAsig.RowStyles.Add(new RowStyle(SizeType.Absolute, 70));
+        tlpAsig.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var flowAsig = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        flowAsig.Controls.Add(Etiquetado("Película:", cboPeliculaAsignar));
+        flowAsig.Controls.Add(Etiquetado("Categoría:", cboCategoriaAsignar));
+        var btnAsig = NuevoBoton("➕ Asignar");
+        btnAsig.Margin = new Padding(6, 18, 0, 0);
+        btnAsig.Click += (_, _) => AsignarPelicula();
+        flowAsig.Controls.Add(btnAsig);
+        tlpAsig.Controls.Add(flowAsig, 0, 0);
+        gridPelisAsignadas.Dock = DockStyle.Fill;
+        tlpAsig.Controls.Add(gridPelisAsignadas, 0, 1);
+        gbAsig.Controls.Add(tlpAsig);
+        tlpRow1.Controls.Add(gbAsig, 0, 0);
+
+        tlp.Controls.Add(tlpRow1, 0, 1);
 
         /* ── 2. Evaluaciones ── */
         var gbEval = new GroupBox { Text = "Registrar Evaluación", Dock = DockStyle.Fill, Padding = new Padding(8) };
@@ -576,7 +666,7 @@ public class MainForm : Form
         gridEval.Dock = DockStyle.Fill;
         tlpEval.Controls.Add(gridEval, 0, 1);
         gbEval.Controls.Add(tlpEval);
-        tlp.Controls.Add(gbEval, 0, 1);
+        tlp.Controls.Add(gbEval, 0, 2);
 
         /* ── 3. Premios ── */
         var gbPrem = new GroupBox { Text = "Registrar Premio (Ganador por Categoría)", Dock = DockStyle.Fill, Padding = new Padding(8) };
@@ -585,7 +675,6 @@ public class MainForm : Form
         tlpPrem.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         var flowPrem = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
         flowPrem.Controls.Add(Etiquetado("Categoría:", cboCategoriaPrem));
-        flowPrem.Controls.Add(Etiquetado("Película ganadora:", cboPeliculaPrem));
         var btnPrem = NuevoBoton("🏅 Registrar Premio");
         btnPrem.Margin = new Padding(10, 18, 0, 0);
         btnPrem.Click += (_, _) => RegistrarPremio();
@@ -594,11 +683,18 @@ public class MainForm : Form
         gridPremios.Dock = DockStyle.Fill;
         tlpPrem.Controls.Add(gridPremios, 0, 1);
         gbPrem.Controls.Add(tlpPrem);
-        tlp.Controls.Add(gbPrem, 0, 2);
+        tlp.Controls.Add(gbPrem, 0, 3);
 
         tab.Controls.Add(tlp);
 
+        cboAnioCompetencia.SelectedIndexChanged += (_, _) =>
+        {
+            CargarCategoriasPorAnio();
+            CargarPeliculasAsignar();
+            FiltrarPremios();
+        };
         cboCategoria.SelectedIndexChanged += (_, _) => CargarDetalleCategoria();
+        cboCategoriaAsignar.SelectedIndexChanged += (_, _) => CargarPelisAsignadas();
 
         return tab;
     }
@@ -610,8 +706,8 @@ public class MainForm : Form
 
         var panel = NuevoPanelSuperior(70);
         cboAnio.Width = 100;
-        cboAnio.Items.Insert(0, "Todos");
-        cboAnio.SelectedIndex = 0;
+        cboAnio.Items.Clear();
+        cboAnio.SelectedIndex = -1;
         panel.Controls.Add(Etiquetado("Año Edición:", cboAnio));
         var btn = NuevoBoton("↺ Actualizar reporte");
         btn.Click += (_, _) => cargar();
@@ -782,15 +878,14 @@ public class MainForm : Form
     {
         DataTable ediciones = ProcedimientosBD.ListarEdiciones();
         cbo.Items.Clear();
-        cbo.Items.Add("Todos");
         foreach (DataRow r in ediciones.Rows)
             cbo.Items.Add(r["Anio"]?.ToString() ?? "");
-        cbo.SelectedIndex = 0;
+        if (cbo.Items.Count > 0) cbo.SelectedIndex = 0;
     }
 
     private int? ObtenerAnioSeleccionado(ComboBox cbo)
     {
-        if (cbo.SelectedIndex <= 0) return null;
+        if (cbo.SelectedIndex < 0) return null;
         if (int.TryParse(cbo.Text, out int anio)) return anio;
         return null;
     }
@@ -893,20 +988,33 @@ public class MainForm : Form
         if (chkGenerosPeli.CheckedItems.Count == 0) { Aviso("Seleccione al menos un género."); return; }
         Intentar(() =>
         {
-            var (respuesta, idPelicula) = ProcedimientosBD.CrearPelicula(
-                txtTituloPeli.Text.Trim(), (int)nudAnioPeli.Value, (int)nudDuracionPeli.Value,
-                txtPaisPeli.Text.Trim(), txtSinopsisPeli.Text.Trim(),
-                cboClasifPeli.Text, cboFormatoPeli.Text, cboEstadoPeli.Text);
-            foreach (var item in chkGenerosPeli.CheckedItems)
+            if (idPeliEditando.HasValue)
             {
-                if (item is DataRowView row)
-                    ProcedimientosBD.AgregarGeneroPelicula(idPelicula,
-                        Convert.ToInt32(row.Row["IdGenero"]));
+                string r = ProcedimientosBD.EditarPelicula(idPeliEditando.Value,
+                    txtTituloPeli.Text.Trim(), (int)nudAnioPeli.Value, (int)nudDuracionPeli.Value,
+                    txtPaisPeli.Text.Trim(), txtSinopsisPeli.Text.Trim(),
+                    cboClasifPeli.Text, cboFormatoPeli.Text, cboEstadoPeli.Text);
+                Exito(r);
+                idPeliEditando = null;
+                btnCrearPeli.Text = "➕ Crear Película";
             }
-            Exito(respuesta);
-            DataTable peliculas = ProcedimientosBD.ListarPeliculas();
-            EnlazarCombo(cboPelicula, peliculas.Copy(), "Titulo", "IdPelicula");
-            EnlazarCombo(cboPeliculaAg, peliculas.Copy(), "Titulo", "IdPelicula");
+            else
+            {
+                var (respuesta, idPelicula) = ProcedimientosBD.CrearPelicula(
+                    txtTituloPeli.Text.Trim(), (int)nudAnioPeli.Value, (int)nudDuracionPeli.Value,
+                    txtPaisPeli.Text.Trim(), txtSinopsisPeli.Text.Trim(),
+                    cboClasifPeli.Text, cboFormatoPeli.Text, cboEstadoPeli.Text);
+                foreach (var item in chkGenerosPeli.CheckedItems)
+                {
+                    if (item is DataRowView row)
+                        ProcedimientosBD.AgregarGeneroPelicula(idPelicula,
+                            Convert.ToInt32(row.Row["IdGenero"]));
+                }
+                Exito(respuesta);
+                DataTable peliculas = ProcedimientosBD.ListarPeliculas();
+                EnlazarCombo(cboPelicula, peliculas.Copy(), "Titulo", "IdPelicula");
+                EnlazarCombo(cboPeliculaAg, peliculas.Copy(), "Titulo", "IdPelicula");
+            }
             LimpiarFormularioPelicula();
             RefrescarGrillasAdmin();
         });
@@ -930,9 +1038,20 @@ public class MainForm : Form
         if (cboSedeSala.SelectedValue is not int idSede) { Aviso("Seleccione una sede."); return; }
         Intentar(() =>
         {
-            string respuesta = ProcedimientosBD.CrearSala(
-                txtNombreSala.Text.Trim(), (int)nudCapacidadSala.Value, idSede);
-            Exito(respuesta);
+            if (idSalaEditando.HasValue)
+            {
+                string r = ProcedimientosBD.EditarSala(idSalaEditando.Value,
+                    txtNombreSala.Text.Trim(), (int)nudCapacidadSala.Value, idSede);
+                Exito(r);
+                idSalaEditando = null;
+                btnCrearSala.Text = "➕ Sala";
+            }
+            else
+            {
+                string respuesta = ProcedimientosBD.CrearSala(
+                    txtNombreSala.Text.Trim(), (int)nudCapacidadSala.Value, idSede);
+                Exito(respuesta);
+            }
             DataTable salas = ProcedimientosBD.ListarSalas();
             AgregarColumnaDescriptiva(salas, r => $"{r["NombreSala"]} — {r["NombreSede"]} (Cap. {r["Capacidad"]})");
             EnlazarCombo(cboSala, salas, "Descripcion_UI", "IdSala");
@@ -947,10 +1066,22 @@ public class MainForm : Form
         if (string.IsNullOrWhiteSpace(txtNombreSede.Text)) { Aviso("Ingrese el nombre de la sede."); return; }
         Intentar(() =>
         {
-            string respuesta = ProcedimientosBD.CrearSede(
-                txtNombreSede.Text.Trim(), txtDirSede.Text.Trim(),
-                txtCiudadSede.Text.Trim(), txtWebSede.Text.Trim());
-            Exito(respuesta);
+            if (idSedeEditando.HasValue)
+            {
+                string r = ProcedimientosBD.EditarSede(idSedeEditando.Value,
+                    txtNombreSede.Text.Trim(), txtDirSede.Text.Trim(),
+                    txtCiudadSede.Text.Trim(), txtWebSede.Text.Trim());
+                Exito(r);
+                idSedeEditando = null;
+                btnCrearSede.Text = "➕ Sede";
+            }
+            else
+            {
+                string respuesta = ProcedimientosBD.CrearSede(
+                    txtNombreSede.Text.Trim(), txtDirSede.Text.Trim(),
+                    txtCiudadSede.Text.Trim(), txtWebSede.Text.Trim());
+                Exito(respuesta);
+            }
             DataTable sedes = ProcedimientosBD.ListarSedes();
             EnlazarCombo(cboSedeSala, sedes, "NombreSede", "IdSede");
             txtNombreSede.Clear(); txtDirSede.Clear(); txtCiudadSede.Clear(); txtWebSede.Clear();
@@ -1114,16 +1245,81 @@ public class MainForm : Form
     {
         Intentar(() =>
         {
-            DataTable cats = ProcedimientosBD.ListarCategorias();
-            EnlazarCombo(cboCategoria, cats.Copy(), "NombreCategoria", "IdCategoria");
-            EnlazarCombo(cboCategoriaPrem, cats.Copy(), "NombreCategoria", "IdCategoria");
-            gridPremios.DataSource = ProcedimientosBD.ListarPremios();
-            CargarDetalleCategoria();
+            DataTable eds = ProcedimientosBD.ListarEdiciones();
+            cboAnioCompetencia.Items.Clear();
+            foreach (DataRow r in eds.Rows)
+                cboAnioCompetencia.Items.Add(r["Anio"]?.ToString() ?? "");
+            if (cboAnioCompetencia.Items.Count > 0) cboAnioCompetencia.SelectedIndex = 0;
+        });
+    }
+
+    private void CargarCategoriasPorAnio()
+    {
+        gridMiembrosCat.DataSource = null;
+        gridEval.DataSource = null;
+        cboMiembroEval.DataSource = null;
+        cboPeliculaEval.DataSource = null;
+        txtComentario.Clear();
+        nudPuntuacion.Value = 5;
+
+        string? anio = cboAnioCompetencia.SelectedItem?.ToString();
+        DataTable cats;
+        if (anio != null && int.TryParse(anio, out int anioCat))
+            cats = ProcedimientosBD.ListarCategoriasPorAnio(anioCat);
+        else
+            cats = ProcedimientosBD.ListarCategorias();
+
+        _cargandoCategorias = true;
+        EnlazarCombo(cboCategoria, cats.Copy(), "NombreCategoria", "IdCategoria");
+        EnlazarCombo(cboCategoriaPrem, cats.Copy(), "NombreCategoria", "IdCategoria");
+        _cargandoCategorias = false;
+    }
+
+    private void CargarPeliculasAsignar()
+    {
+        string? anio = cboAnioCompetencia.SelectedItem?.ToString();
+        DataTable pelis;
+        if (anio != null && int.TryParse(anio, out int anioPeli))
+            pelis = ProcedimientosBD.ListarPeliculasPorAnio(anioPeli);
+        else
+            pelis = ProcedimientosBD.ListarPeliculas();
+        EnlazarCombo(cboPeliculaAsignar, pelis, "Titulo", "IdPelicula");
+        DataTable cats;
+        if (anio != null && int.TryParse(anio, out int anioCat))
+            cats = ProcedimientosBD.ListarCategoriasPorAnio(anioCat);
+        else
+            cats = ProcedimientosBD.ListarCategorias();
+        EnlazarCombo(cboCategoriaAsignar, cats, "NombreCategoria", "IdCategoria");
+    }
+
+    private void AsignarPelicula()
+    {
+        if (cboPeliculaAsignar.SelectedItem is not DataRowView drvP ||
+            cboCategoriaAsignar.SelectedItem is not DataRowView drvC)
+        { Aviso("Seleccione película y categoría."); return; }
+        Intentar(() =>
+        {
+            string r = ProcedimientosBD.AsignarPeliculaCategoria(
+                Convert.ToInt32(drvP.Row["IdPelicula"]),
+                Convert.ToInt32(drvC.Row["IdCategoria"]));
+            Exito(r);
+            CargarPelisAsignadas();
+        });
+    }
+
+    private void CargarPelisAsignadas()
+    {
+        if (cboCategoriaAsignar.SelectedItem is not DataRowView drv) return;
+        int idCat = Convert.ToInt32(drv.Row["IdCategoria"]);
+        Intentar(() =>
+        {
+            gridPelisAsignadas.DataSource = ProcedimientosBD.ListarPeliculasEnCompetencia(idCat);
         });
     }
 
     private void CargarDetalleCategoria()
     {
+        if (_cargandoCategorias) return;
         if (cboCategoria.SelectedItem is not DataRowView drv) return;
         int idCat = Convert.ToInt32(drv.Row["IdCategoria"]);
         Intentar(() =>
@@ -1134,9 +1330,13 @@ public class MainForm : Form
             DataTable miembros = ProcedimientosBD.ListarMiembrosPorCategoria(idCat);
             EnlazarCombo(cboMiembroEval, miembros, "Nombre", "IdMiembro");
 
-            DataTable pelis = ProcedimientosBD.ListarPeliculasEnCompetencia(idCat);
+            DataTable pelis;
+            string? anioSel = cboAnioCompetencia.SelectedItem?.ToString();
+            if (anioSel != null && int.TryParse(anioSel, out int anioPeli))
+                pelis = ProcedimientosBD.ListarPeliculasEnCompetenciaPorAnio(idCat, anioPeli);
+            else
+                pelis = ProcedimientosBD.ListarPeliculasEnCompetencia(idCat);
             EnlazarCombo(cboPeliculaEval, pelis.Copy(), "Titulo", "IdPelicula");
-            EnlazarCombo(cboPeliculaPrem, pelis.Copy(), "Titulo", "IdPelicula");
         });
     }
 
@@ -1163,17 +1363,29 @@ public class MainForm : Form
     private void RegistrarPremio()
     {
         if (cboCategoriaPrem.SelectedItem is not DataRowView drvC ||
-            cboPeliculaPrem.SelectedItem is not DataRowView drvP)
-        { Aviso("Seleccione categoría y película ganadora."); return; }
+            cboAnioCompetencia.SelectedItem is not string anioSel) { Aviso("Seleccione categoría y año."); return; }
+        int idCat = Convert.ToInt32(drvC.Row["IdCategoria"]);
+        int anio = int.Parse(anioSel);
         Intentar(() =>
         {
+            DataTable ganador = ProcedimientosBD.ObtenerGanadorCategoria(idCat);
+            if (ganador.Rows.Count == 0)
+            { Aviso("No hay evaluaciones para esta categoría."); return; }
+            DataRow w = ganador.Rows[0];
             string r = ProcedimientosBD.RegistrarPremio(
-                Convert.ToInt32(drvC.Row["IdCategoria"]),
-                Convert.ToInt32(drvP.Row["IdPelicula"]),
-                DateTime.Now.Year);
+                idCat, Convert.ToInt32(w["IdPelicula"]), anio);
             Exito(r);
-            gridPremios.DataSource = ProcedimientosBD.ListarPremios();
+            FiltrarPremios();
         });
+    }
+
+    private void FiltrarPremios()
+    {
+        DataTable dt = ProcedimientosBD.ListarPremios();
+        string? anio = cboAnioCompetencia.SelectedItem?.ToString();
+        if (anio != null && int.TryParse(anio, out int _))
+            dt.DefaultView.RowFilter = $"AnioEdicion = {anio}";
+        gridPremios.DataSource = dt;
     }
 
     /* ════════════════ Manejo de excepciones ════════════════
